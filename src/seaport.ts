@@ -210,10 +210,11 @@ export class Seaport {
       domain,
       salt,
     }: CreateOrderInput,
-    accountAddress: string
+    accountAddress?: string
   ): Promise<OrderUseCase<CreateOrderAction>> {
     const signer = this._getSigner(accountAddress);
-    const offerer = accountAddress;
+    const signerAddress = await signer.getAddress();
+    const offerer = accountAddress ?? signerAddress;
     const offerItems = offer.map(mapInputItemToOfferItem);
     const considerationItems = [
       ...consideration.map((consideration) => ({
