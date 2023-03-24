@@ -189,6 +189,7 @@ export async function fulfillBasicOrder({
   signer,
   tips = [],
   conduitKey = NO_CONDUIT,
+  domain,
 }: {
   order: Order;
   seaportContract: Seaport;
@@ -200,6 +201,7 @@ export async function fulfillBasicOrder({
   signer: Signer;
   tips?: ConsiderationItem[];
   conduitKey: string;
+  domain?: string;
 }): Promise<
   OrderUseCase<
     ExchangeAction<
@@ -292,7 +294,8 @@ export async function fulfillBasicOrder({
     transactionMethods: getTransactionMethods(
       seaportContract.connect(signer),
       "fulfillBasicOrder",
-      [basicOrderParameters, payableOverrides]
+      [basicOrderParameters, payableOverrides],
+      domain
     ),
   } as const;
 
@@ -323,6 +326,7 @@ export async function fulfillStandardOrder({
   conduitKey,
   recipientAddress,
   signer,
+  domain,
 }: {
   order: Order;
   unitsToFill?: BigNumberish;
@@ -341,6 +345,7 @@ export async function fulfillStandardOrder({
   recipientAddress: string;
   timeBasedItemParams: TimeBasedItemParams;
   signer: Signer;
+  domain?: string;
 }): Promise<
   OrderUseCase<
     ExchangeAction<
@@ -462,11 +467,12 @@ export async function fulfillStandardOrder({
             payableOverrides,
           ]
         )
-      : getTransactionMethods(seaportContract.connect(signer), "fulfillOrder", [
-          orderAccountingForTips,
-          conduitKey,
-          payableOverrides,
-        ]),
+      : getTransactionMethods(
+          seaportContract.connect(signer),
+          "fulfillOrder",
+          [orderAccountingForTips, conduitKey, payableOverrides],
+          domain
+        ),
   } as const;
 
   const actions = [...approvalActions, exchangeAction] as const;
@@ -522,6 +528,7 @@ export async function fulfillAvailableOrders({
   conduitKey,
   signer,
   recipientAddress,
+  domain,
 }: {
   ordersMetadata: FulfillOrdersMetadata;
   seaportContract: Seaport;
@@ -532,6 +539,7 @@ export async function fulfillAvailableOrders({
   conduitKey: string;
   signer: Signer;
   recipientAddress: string;
+  domain: string;
 }): Promise<
   OrderUseCase<
     ExchangeAction<
@@ -712,7 +720,8 @@ export async function fulfillAvailableOrders({
         recipientAddress,
         advancedOrdersWithTips.length,
         payableOverrides,
-      ]
+      ],
+      domain
     ),
   } as const;
 
