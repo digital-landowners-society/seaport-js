@@ -15,7 +15,6 @@ import {
   KNOWN_CONDUIT_KEYS_TO_CONDUIT,
   MAX_INT,
   NO_CONDUIT,
-  OPENSEA_CONDUIT_KEY,
   OrderType,
   CROSS_CHAIN_SEAPORT_ADDRESS,
 } from "./constants";
@@ -38,11 +37,7 @@ import type {
   SeaportContract,
   Signer,
 } from "./types";
-import { getApprovalActions } from "./utils/approval";
-import {
-  getBalancesAndApprovals,
-  validateOfferBalancesAndApprovals,
-} from "./utils/balanceAndApprovalCheck";
+import { getBalancesAndApprovals } from "./utils/balanceAndApprovalCheck";
 import {
   fulfillAvailableOrders,
   fulfillBasicOrder,
@@ -80,8 +75,6 @@ export class Seaport {
   private config: Required<Omit<SeaportConfig, "overrides">>;
 
   private defaultConduitKey: string;
-
-  readonly OPENSEA_CONDUIT_KEY: string = OPENSEA_CONDUIT_KEY;
 
   /**
    * @param providerOrSigner - The provider or signer to use for web3-related calls
@@ -191,7 +184,6 @@ export class Seaport {
    *                   existing consideration items and then tacked on as new consideration items
    * @param input.domain An optional domain to be hashed and included in the first four bytes of the random salt.
    * @param input.salt Arbitrary salt. If not passed in, a random salt will be generated with the first four bytes being the domain hash or empty.
-   * @param input.offerer The order's creator address. Defaults to the first address on the provider.
    * @param accountAddress Optional address for which to create the order with
    * @returns a use case containing the list of actions needed to be performed in order to create the order
    */
@@ -240,17 +232,9 @@ export class Seaport {
 
     const totalCurrencyAmount = totalItemsAmount(currencies);
 
-    const operator = this.config.conduitKeyToConduit[conduitKey];
-
-    const [resolvedCounter, balancesAndApprovals] = await Promise.all([
+    // TODO cache counter value
+    const [resolvedCounter] = await Promise.all([
       counter ?? this.getCounter(offerer),
-      getBalancesAndApprovals({
-        owner: offerer,
-        items: offerItems,
-        criterias: [],
-        multicallProvider: this.multicallProvider,
-        operator,
-      }),
     ]);
 
     const orderType = this._getOrderTypeFromOrderOptions({
@@ -291,23 +275,6 @@ export class Seaport {
       conduitKey,
     };
 
-    const checkBalancesAndApprovals =
-      this.config.balanceAndApprovalChecksOnOrderCreation;
-
-    const insufficientApprovals = checkBalancesAndApprovals
-      ? validateOfferBalancesAndApprovals({
-          offer: offerItems,
-          criterias: [],
-          balancesAndApprovals,
-          throwOnInsufficientBalances: checkBalancesAndApprovals,
-          operator,
-        })
-      : [];
-
-    const approvalActions = checkBalancesAndApprovals
-      ? await getApprovalActions(insufficientApprovals, signer)
-      : [];
-
     const createOrderAction = {
       type: "create",
       getMessageToSign: () => {
@@ -327,7 +294,7 @@ export class Seaport {
       },
     } as const;
 
-    const actions = [...approvalActions, createOrderAction] as const;
+    const actions = [createOrderAction] as const;
 
     return {
       actions,
