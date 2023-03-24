@@ -539,7 +539,7 @@ export async function fulfillAvailableOrders({
   conduitKey: string;
   signer: Signer;
   recipientAddress: string;
-  domain: string;
+  domain?: string;
 }): Promise<
   OrderUseCase<
     ExchangeAction<
