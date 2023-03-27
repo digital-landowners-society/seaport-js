@@ -191,7 +191,8 @@ export class Seaport {
     exactApproval?: boolean
   ): Promise<OrderUseCase<CreateOrderAction>> {
     const signer = this._getSigner(accountAddress);
-    const offerer = await signer.getAddress();
+    const signerAddress = await signer.getAddress();
+    const offerer = accountAddress ?? signerAddress;
 
     const { orderComponents, approvalActions } = await this._formatOrder(
       signer,
@@ -246,7 +247,8 @@ export class Seaport {
     }
 
     const signer = this._getSigner(accountAddress);
-    const offerer = await signer.getAddress();
+    const signerAddress = await signer.getAddress();
+    const offerer = accountAddress ?? signerAddress;
     const offererCounter = await this.getCounter(offerer);
 
     const allApprovalActions: ApprovalAction[] = [];
